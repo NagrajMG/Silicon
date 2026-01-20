@@ -91,8 +91,6 @@ The output binary is: `build/SILICON`
 2) SIGINT  (control + C)
 3) Send SIGTERM if you can.
 
----
-
 ### Example of SIGQUIT / SIGINT / SIGTERM
 
 This plot shows how Silicon behaves when terminated externally.
