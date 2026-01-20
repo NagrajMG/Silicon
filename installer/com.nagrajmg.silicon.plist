@@ -1,0 +1,32 @@
+<!-- It tells macOS how to run this C++ program as a background system agent or daemon. -->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- A unique label for the launchd job -->
+    <key>Label</key>
+    <string>com.nagrajmg.silicon</string>
+
+    <!-- The program and arguments to launch -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/copperhead07/Computing/cpp_projects/SILICON/build/SILICON</string>
+    </array>
+
+    <!-- Start the agent when the plist is loaded -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Keep the agent alive if it exits -->
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/copperhead07/Computing/cpp_projects/SILICON/logs/stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/copperhead07/Computing/cpp_projects/SILICON/logs/stderr.log</string>
+
+</dict>
+</plist>
