@@ -87,19 +87,19 @@ The output binary is: `build/SILICON`.
 
 This plot shows how Silicon behaves when terminated externally.
 
-![External Kill](Plots/Phase1/outsider_kill.png)
+![External Kill](../Plots/Phase1/outsider_kill.png)
 
 ### System Message 
 
 This plot captures detection of Background Agent - Silicon
 
-![System Message](Plots/Phase1/system_message.png)
+![System Message](../Plots/Phase1/system_message.png)
 
 ## Run with launchd
 
 1) Update the path in the plist to your absolute binary location:
 
-- [installer/com.yourname.macos_systems_agent.plist](installer/com.nagrajmg.silicon.plist)
+- [installer/com.nagrajmg.silicon.plist](installer/com.nagrajmg.silicon.plist)
 
 2) Copy the plist in the LaunchAgents:
 
