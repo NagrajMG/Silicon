@@ -83,17 +83,23 @@ The output binary is: `build/SILICON`.
 2) SIGINT  (control + C)
 3) Send SIGTERM if you can.
 
-### Example of SIGQUIT / SIGINT / SIGTERM
+## Example of SIGQUIT / SIGINT / SIGTERM
 
 This plot shows how Silicon behaves when terminated externally.
 
-![External Kill](../Plots/Phase1/outsider_kill.png)
+<p align="center">
+  <img src="../Plots/Phase1/outsider_kill.png" width="700"/>
+</p>
 
-### System Message 
+---
 
-This plot captures detection of Background Agent - Silicon
+## System Message
 
-![System Message](../Plots/Phase1/system_message.png)
+This plot captures detection of Background Agent – Silicon.
+
+<p align="center">
+  <img src="../Plots/Phase1/system_message.png" width="700"/>
+</p>
 
 ## Run with launchd
 
