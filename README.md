@@ -14,6 +14,6 @@ Phase 1 establishes the foundation of the system agent:
 - launchd integration on macOS.
 - Timed execution for development safety.
 
-Detailed documentation: [Phase 1](../READMES/Phase1.md)
+Detailed documentation: [Phase 1](READMES/Phase1.md)
 
 ---
