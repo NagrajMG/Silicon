@@ -54,7 +54,7 @@ SILICON/
 └── CMakeLists.txt          # Build system configuration
 ```
 
---- 
+--
 
 ## Build (CMake)
 
@@ -83,7 +83,7 @@ The output binary is: `build/SILICON`
 2) Automatically stops after 1 minute (development safety).
 3) Prints a graceful termination banner on shutdown.
 
----
+--
 
 ### Gentle Termination of the process
 
@@ -91,7 +91,7 @@ The output binary is: `build/SILICON`
 2) SIGINT  (control + C)
 3) Send SIGTERM if you can.
 
---- 
+--
 
 ### Example of SIGQUIT / SIGINT / SIGTERM
 
@@ -109,7 +109,7 @@ This plot captures detection of Background Agent – Silicon.
   <img src="../Plots/Phase1/system_message.png" width="700"/>
 </p>
 
----
+--
 
 ## Run with launchd
 
@@ -150,7 +150,7 @@ launchctl list | grep silicon
 ```
 This returns the job identifier and confirms the agent is active.
 
----
+--
 
 ## Development Safety
 
