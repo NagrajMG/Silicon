@@ -3,7 +3,7 @@
 Minimal, production-oriented macOS background system agent in C++17.  
 Phase 1 logs heartbeat messages every 5 seconds, supports graceful shutdown via signals, and auto-terminates after a bounded runtime to avoid runaway agents during development.
 
-## Features (Phase 1)
+## Features
 
 - Thread-safe file logging  
 - Heartbeat every 5 seconds  
