@@ -105,7 +105,7 @@ This plot captures detection of Background Agent – Silicon.
 
 1) Update the path in the plist to your absolute binary location:
 
-- [installer/com.nagrajmg.silicon.plist](installer/com.nagrajmg.silicon.plist)
+- [installer/com.nagrajmg.silicon.plist](../installer/com.nagrajmg.silicon.plist)
 
 2) Copy the plist in the LaunchAgents:
 
