@@ -52,34 +52,38 @@ SILICON/
 ├── .gitignore              # Git ignore rules
 │
 └── CMakeLists.txt          # Build system configuration
-
 ```
 
 ## Build (CMake)
 
 ```bash
+
 mkdir -p build
+
 cmake -S . -B build
 cmake --build build
+
 ```
 
-The output binary is: `build/SILICON`.
+The output binary is: `build/SILICON`
 
 ## Run manually
 
 ```bash
+
 ./build/SILICON
+
 ```
 
 ### Runtime Behavior
 
-1) Logs a heartbeat every 5 seconds
-2) Automatically stops after 1 minute (development safety)
-3) Prints a graceful termination banner on shutdown
+1) Logs a heartbeat every 5 seconds.
+2) Automatically stops after 1 minute (development safety).
+3) Prints a graceful termination banner on shutdown.
 
 ### Gentle Termination of the process
 
-1) SIGQUIT (control + \)
+1) SIGQUIT (control + \\ )
 2) SIGINT  (control + C)
 3) Send SIGTERM if you can.
 
@@ -110,27 +114,34 @@ This plot captures detection of Background Agent – Silicon.
 2) Copy the plist in the LaunchAgents:
 
 ```bash
-cp installer/com.nagrajmg.silicon.plist ~/Library/LaunchAgents/ 
+
+cp installer/com.nagrajmg.silicon.plist ~/Library/LaunchAgents/
+
 ```
 
 3) Load and start the agent:
 
 ```bash
+
 launchctl load -w ~/Library/LaunchAgents/com.nagrajmg.silicon.plist
+
 ```
 
 4) Unload and stop the agent:
 
 ```bash
+
 launchctl unload -w ~/Library/LaunchAgents/com.nagrajmg.silicon.plist
+
 ```
 
 ## Checks
 
 ```bash
-launchctl list | grep silicon 
-```
 
+launchctl list | grep silicon
+
+```
 This returns the job identifier and confirms the agent is active.
 
 ## Development Safety
