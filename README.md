@@ -8,12 +8,12 @@ It is built in progressive phases, starting with a clean and correct agent lifec
 
 Phase 1 establishes the foundation of the system agent:
 
-- Background agent lifecycle
-- Graceful shutdown using POSIX signals (SIGINT, SIGTERM, SIGQUIT)
-- Thread-safe file logging
-- launchd integration on macOS
-- Timed execution for development safety
+- Background agent lifecycle.
+- Graceful shutdown using POSIX signals (SIGINT, SIGTERM, SIGQUIT).
+- Thread-safe file logging.
+- launchd integration on macOS.
+- Timed execution for development safety.
 
-Detailed documentation: -[README](../READMES/Phase1.md)
+Detailed documentation: [Phase 1](../READMES/Phase1.md)
 
 ---
