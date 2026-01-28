@@ -1,0 +1,2 @@
+/Users/copperhead07/Computing/cpp_projects/SILICON/enforcement
+/Users/copperhead07/Computing/cpp_projects/SILICON/core

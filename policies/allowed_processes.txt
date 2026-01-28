@@ -1,0 +1,8 @@
+Finder
+Dock
+WindowServer
+loginwindow
+Terminal
+SILICON
+Google Chrome
+Safari
