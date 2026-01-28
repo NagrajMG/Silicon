@@ -1,6 +1,6 @@
 # SILICON
 
-Silicon is a minimal, production-oriented macOS background system agent written in C++17.
+Silicon is a minimal, production-oriented macOS background system agent written in C++23.
 
 It is built in progressive phases, starting with a clean and correct agent lifecycle and system integration.
 
