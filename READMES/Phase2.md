@@ -87,5 +87,5 @@ This returns the job identifier and confirms the agent is active.
 2. No forced termination by default
 3. No system process disruption
 4. No irreversible network changes
-Phase 2 is safe by design.
+5. Phase 2 is safe by design.
 ---
