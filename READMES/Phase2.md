@@ -83,10 +83,9 @@ This returns the job identifier and confirms the agent is active.
 ---
 
 ## Development Safety - Phase 2 Safety Guarantees
-No kernel hooks
-No forced termination by default
-No system process disruption
-No irreversible network changes
+1. No kernel hooks
+2. No forced termination by default
+3. No system process disruption
+4. No irreversible network changes
 Phase 2 is safe by design.
-
 ---
