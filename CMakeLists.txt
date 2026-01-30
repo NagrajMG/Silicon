@@ -22,6 +22,13 @@ target_include_directories(
 add_executable(logger tests/logging.cpp)
 target_link_libraries(logger PRIVATE silicon_logger)
 
+add_executable(silicon_agent agent/main.cpp)
+target_link_libraries(silicon_agent PRIVATE silicon_logger)
+
+add_executable(agent_skeleton tests/agent_skeleton.cpp)
+target_link_libraries(agent_skeleton PRIVATE silicon_logger)
+
 enable_testing()
 # Register the tests 
-add_test(NAME SILICON->LOGGER COMMAND logger)
+add_test(NAME SILICON_LOGGER COMMAND logger)
+add_test(NAME SILICON_AGENT_SKELETON COMMAND agent_skeleton)
