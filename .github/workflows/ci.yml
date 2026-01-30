@@ -1,0 +1,24 @@
+name: SILICON macOS CI
+
+on:
+  push:
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install GCC
+        run: brew install gcc
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-15
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Run Tests
+        run: ctest --test-dir build --output-on-failure

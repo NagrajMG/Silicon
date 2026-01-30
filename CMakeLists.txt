@@ -1,31 +1,27 @@
-cmake_minimum_required(VERSION 3.16)
-
-if(APPLE)
-  set(CMAKE_CXX_COMPILER "clang++" CACHE STRING "C++ compiler" FORCE)
-endif()
-
+cmake_minimum_required(VERSION 3.20)
 project(SILICON LANGUAGES CXX)
 
 if(NOT APPLE)
-  message(FATAL_ERROR "This project targets macOS.")
+    message(FATAL_ERROR "SILICON is macOS-only. Build aborted.")
 endif()
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(SILICON
-  core/agent.cpp
-  core/scheduler.cpp
-  core/session_manager.cpp
+# Interface, shared, static
+add_library(silicon_logger INTERFACE)
 
-  policies/policy_loader.cpp
-
-  enforcement/process_enforcer.cpp
-  enforcement/filesystem_enforcer.cpp
-  enforcement/network_enforcer.cpp
-  debugs/debug.cpp
-  logging/logger.cpp
+# Any target that links to silicon_logger should automatically use this directory as an include path
+target_include_directories(
+    silicon_logger
+    INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_include_directories(SILICON PRIVATE ${PROJECT_SOURCE_DIR})
+add_executable(logger tests/logging.cpp)
+target_link_libraries(logger PRIVATE silicon_logger)
+
+enable_testing()
+# Register the tests 
+add_test(NAME SILICON->LOGGER COMMAND logger)
