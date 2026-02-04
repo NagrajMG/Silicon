@@ -2,23 +2,42 @@ name: SILICON macOS CI
 
 on:
   push:
+    branches: [ Silicon ]
 
 jobs:
   build-and-test:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install GCC
-        run: brew install gcc
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install cmake ninja
 
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-15
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -G "Unix Makefiles"
 
       - name: Build
-        run: cmake --build build
+        run: |
+          cd build
+          make -j4  # Build everything
 
-      - name: Run Tests
-        run: ctest --test-dir build --output-on-failure
+      - name: Run Tests with CTest
+        run: |
+          cd build
+          ctest --output-on-failure --timeout 60
+
+      - name: Upload test artifacts (if tests fail)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: |
+            build/Testing/Temporary/LastTest.log
+            build/Testing/Temporary/LastTestsFailed.log
