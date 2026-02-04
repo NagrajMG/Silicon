@@ -17,9 +17,11 @@ if(NOT nlohmann_json_FOUND)
     message(STATUS "nlohmann_json not found, downloading v3.11.2...")
     include(FetchContent)
     FetchContent_Declare(
-        nlohmann_json
-        URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
-    )
+    nlohmann_json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+
     # Disable tests and installation for faster build
     set(JSON_BuildTests OFF CACHE BOOL "")
     set(JSON_Install OFF CACHE BOOL "")
