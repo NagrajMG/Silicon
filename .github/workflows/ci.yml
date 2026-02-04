@@ -9,31 +9,27 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install GCC and CMake
         run: |
           brew update
-          brew install cmake ninja
+          brew install gcc cmake
 
-      - name: Configure
+      - name: Configure CMake with GCC
         run: |
-          mkdir -p build
-          cd build
-          cmake .. -G Ninja
+          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-15
 
-      - name: Build
+      - name: Build Project
         run: |
-          cd build
-          ninja
+          cmake --build build --parallel
 
       - name: Run Tests with CTest
         run: |
-          cd build
-          ctest --output-on-failure --timeout 60
+          ctest --test-dir build --output-on-failure --timeout 60
 
-      - name: Upload test artifacts (if tests fail)
+      - name: Upload Logs on Failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
