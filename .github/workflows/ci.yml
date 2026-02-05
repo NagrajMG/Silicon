@@ -26,8 +26,9 @@ jobs:
           cmake --build build --parallel
 
       - name: Run Tests with CTest
+        working-directory: build/bin
         run: |
-          ctest --test-dir build --output-on-failure --timeout 60
+          ctest --output-on-failure --timeout 60
 
       - name: Upload Logs on Failure
         if: failure()
