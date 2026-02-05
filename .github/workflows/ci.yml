@@ -19,14 +19,14 @@ jobs:
 
       - name: Configure CMake with GCC
         run: |
-          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-15
+          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_BUILD_TYPE=Release
 
       - name: Build Project
         run: |
           cmake --build build --parallel
 
-      - name: Run Tests with CTest
-        working-directory: build/bin
+      - name: Run All Tests with CTest
+        working-directory: build
         run: |
           ctest --output-on-failure --timeout 60
 
