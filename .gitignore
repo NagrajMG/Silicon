@@ -16,6 +16,7 @@ build/
 
 # ===== Logs =====
 runtime/
+Testing/
 
 # ===== Test Artifacts =====
 test_*

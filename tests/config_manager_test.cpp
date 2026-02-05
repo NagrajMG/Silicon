@@ -12,12 +12,13 @@ namespace fs = std::filesystem;
 class TempConfigFile {
 public:
     TempConfigFile(const std::string& content) {
-        temp_dir = "silicon_test";
+        temp_dir = fs::temp_directory_path() / fs::path("silicon_test_" + std::to_string(std::rand()));
         fs::create_directories(temp_dir);
         config_path = temp_dir / "test_config.json";
 
         std::ofstream file(config_path);
         file << content;
+        file.close();
     }
 
     ~TempConfigFile() {
@@ -60,6 +61,7 @@ void test_basic_loading() {
     assert(manager.getProcessScanInterval() == 5);
 
     std::cout << "Config loading passed\n";
+    return;
 }
 
 void test_wildcard_domains() {
@@ -80,6 +82,7 @@ void test_wildcard_domains() {
     assert(!manager.isDomainAllowed("api.blocked.com"));
 
     std::cout << "Wildcard domain matching passed\n";
+    return;
 }
 
 void test_path_normalization() {
@@ -97,20 +100,28 @@ void test_path_normalization() {
 
     for (const auto& path : paths) {
         assert(!path.empty());
-        assert(path.find("..") == std::string::npos);
-        assert(path.find("~") == std::string::npos);
+        
+        if (path.find("..") != std::string::npos) {
+            std::cerr << "Normalization Failed! Path still contains '..': " << path << std::endl;
+            abort(); 
+        }
+        
+        if (path.find("~") != std::string::npos) {
+            std::cerr << "Normalization Failed! Path still contains '~': " << path << std::endl;
+            abort(); 
+        }
     }
 
     assert(!ignore_paths.empty());
     assert(std::find(ignore_paths.begin(), ignore_paths.end(), "/usr/bin") != ignore_paths.end());
 
     std::cout << "Path normalization passed\n";
+    return;
 }
 
 void test_reload_functionality() {
     std::cout << "Test: Config Reload\n";
-
-    std::string temp_dir = "silicon_reload_test";
+    std::string temp_dir = fs::temp_directory_path() / fs::path("silicon_reload_test_" + std::to_string(std::rand()));
     fs::create_directories(temp_dir);
     std::string config_path = temp_dir + "/reload_config.json";
 
@@ -135,6 +146,7 @@ void test_reload_functionality() {
 
     fs::remove_all(temp_dir);
     std::cout << "Config reload passed\n";
+    return;
 }
 
 void test_missing_config() {
@@ -149,6 +161,7 @@ void test_missing_config() {
     assert(!ignore_paths.empty());
 
     std::cout << "Missing config handling passed\n";
+    return;
 }
 
 void test_empty_and_malformed_config() {
@@ -173,6 +186,7 @@ void test_empty_and_malformed_config() {
     }
 
     std::cout << "Empty/malformed config handling passed\n";
+    return;
 }
 
 void test_process_allow_logic() {
@@ -202,6 +216,7 @@ void test_process_allow_logic() {
     }
 
     std::cout << "Process logic passed\n";
+    return;
 }
 
 int main() {

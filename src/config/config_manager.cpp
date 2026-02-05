@@ -151,6 +151,7 @@ bool create_default_config(const std::string& config_path) {
   
   // Write the JSON with 2-space indentation so it's human-readable
   file << default_config.dump(2);
+  return file.good();
 }
 } // namespace
 
