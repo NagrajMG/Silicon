@@ -1,9 +1,15 @@
 #include "agent/Agent.hpp"
 
+#include <algorithm>
 #include <atomic>
-#include <csignal>
 #include <chrono>
+#include <csignal>
+#include <memory>
+#include <string>
+
+#include "config/config_manager.hpp"
 #include "logging/logger.hpp"
+#include "process/process_enforcer.hpp"
 
 namespace {
 
@@ -31,10 +37,12 @@ void install_signal_handlers() noexcept {
 
 } // ending
 
-int main() {
+int main(int argc, char** argv) {
   using silicon::logging::Logger;
   using silicon::logging::LogLevel;
   using silicon::agent::Agent;
+  using silicon::config::ConfigManager;
+  using silicon::process::ProcessEnforcer;
 
   auto& logger = Logger::instance();
   logger.set_log_path("runtime/logs/silicon_agent.log");
@@ -45,16 +53,26 @@ int main() {
   logger.set_min_level(LogLevel::Info);
 #endif
 
+  const std::string config_path = (argc > 1 && argv[1] != nullptr) ? argv[1] : "";
+  auto config_manager = std::make_shared<ConfigManager>(config_path);
+
   install_signal_handlers();
 
-#ifndef NDEBUG
-  const std::chrono::seconds heartbeat_interval{10};
-#else
-  const std::chrono::seconds heartbeat_interval{20};
-#endif
+  const int heartbeat_seconds = std::max(1, config_manager->getHeartbeatInterval());
+  const std::chrono::seconds heartbeat_interval{heartbeat_seconds};
 
   Agent agent(heartbeat_interval);
+  ProcessEnforcer process_enforcer(config_manager);
+
+  if (!process_enforcer.start()) {
+    logger.error("ProcessEnforcer failed to start; continuing agent without process monitoring");
+  }
+
   agent.run(g_shutdown_requested_, &g_last_signal_);
+
+  if (!process_enforcer.stop(std::chrono::seconds(2))) {
+    logger.error("ProcessEnforcer did not stop within timeout");
+  }
 
   logger.info("Agent shutdown complete!");
   return 0;

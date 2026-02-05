@@ -130,6 +130,7 @@ bool create_default_config(const std::string& config_path) {
     {"protected_paths", nlohmann::json::array()},
     {"network_whitelist", nlohmann::json::array()},
     {"filesystem_monitor_paths", nlohmann::json::array()},
+    {"debug_mode", true},
     {"heartbeat_interval_seconds", 120},
     {"process_scan_interval_seconds", 10},
     {"system_paths_to_ignore", {
@@ -320,6 +321,18 @@ bool ConfigManager::parse_json_locked(const nlohmann::json& json) {
     target = value;
   };
 
+  auto read_bool = [&](const char* key, bool& target) {
+    if (!json.contains(key)) {
+      return;
+    }
+    if (!json.at(key).is_boolean()) {
+      logger.warn("ConfigManager: {} must be a boolean", key);
+      ok = false;
+      return;
+    }
+    target = json.at(key).get<bool>();
+  };
+
   // Temporary storage for parsed values
   std::vector<std::string> allowed_processes;
   std::vector<std::string> blocked_processes;
@@ -341,6 +354,7 @@ bool ConfigManager::parse_json_locked(const nlohmann::json& json) {
   read_string_array("system_paths_to_ignore", system_paths_to_ignore);
 
   // Read integer config values
+  read_bool("debug_mode", debug_mode_);
   read_int("heartbeat_interval_seconds", heartbeat_interval_seconds_, 1);
   read_int("process_scan_interval_seconds", process_scan_interval_seconds_, 1);
 
@@ -424,6 +438,7 @@ void ConfigManager::apply_defaults() {
 
   heartbeat_interval_seconds_ = 120;      // Default: 120 seconds between heartbeats
   process_scan_interval_seconds_ = 10;    // Default: Scan processes every 10 seconds
+  debug_mode_ = true;                     // Default: monitor-only development mode
 
   // Default system paths to ignore
   system_paths_to_ignore_ = normalize_paths({
@@ -451,6 +466,7 @@ void ConfigManager::log_summary_locked() const {
   logger.info("ConfigManager: System paths to ignore: {}", system_paths_to_ignore_.size());
   logger.info("ConfigManager: Heartbeat interval: {}s", heartbeat_interval_seconds_);
   logger.info("ConfigManager: Process scan interval: {}s", process_scan_interval_seconds_);
+  logger.info("ConfigManager: Debug mode: {}", debug_mode_ ? "true" : "false");
 
   // Debug-level logs with sample data
   if (!allowed_processes_.empty()) {
@@ -489,10 +505,18 @@ void ConfigManager::log_summary_locked() const {
 // Usage: if (config.isProcessAllowed("zoom.us")) { ... }
 bool ConfigManager::isProcessAllowed(const std::string& process_name) const {
   const auto normalized = to_lower_copy(process_name);
+  std::string basename = normalized;
+  const std::size_t slash_pos = normalized.find_last_of('/');
+  if (slash_pos != std::string::npos && slash_pos + 1 < normalized.size()) {
+    basename = normalized.substr(slash_pos + 1);
+  }
   std::shared_lock lock(mutex_);
 
   // Blocked processes take precedence
   if (blocked_processes_.find(normalized) != blocked_processes_.end()) {
+    return false;
+  }
+  if (!basename.empty() && blocked_processes_.find(basename) != blocked_processes_.end()) {
     return false;
   }
 
@@ -502,7 +526,13 @@ bool ConfigManager::isProcessAllowed(const std::string& process_name) const {
   }
 
   // Check if process is in allowed list
-  return allowed_processes_.find(normalized) != allowed_processes_.end();
+  if (allowed_processes_.find(normalized) != allowed_processes_.end()) {
+    return true;
+  }
+  if (!basename.empty() && allowed_processes_.find(basename) != allowed_processes_.end()) {
+    return true;
+  }
+  return false;
 }
 
 // Check if a domain is allowed (supports wildcards like *.example.com)
@@ -556,6 +586,11 @@ int ConfigManager::getHeartbeatInterval() const {
 int ConfigManager::getProcessScanInterval() const {
   std::shared_lock lock(mutex_);
   return process_scan_interval_seconds_;
+}
+
+bool ConfigManager::isDebugMode() const {
+  std::shared_lock lock(mutex_);
+  return debug_mode_;
 }
 
 // Get raw JSON config for debugging/inspection

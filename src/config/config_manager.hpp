@@ -26,6 +26,7 @@ class ConfigManager final {
 
   int getHeartbeatInterval() const;
   int getProcessScanInterval() const;
+  bool isDebugMode() const;
 
   const nlohmann::json& getRawConfig() const;
 
@@ -63,6 +64,7 @@ class ConfigManager final {
 
   int heartbeat_interval_seconds_{60};
   int process_scan_interval_seconds_{2};
+  bool debug_mode_{true};
 
   std::shared_ptr<const nlohmann::json> config_snapshot_;
 };
