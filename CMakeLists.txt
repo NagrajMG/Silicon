@@ -70,7 +70,7 @@ target_include_directories(
 #Searches for the macOS CoreServices framework
 find_library(CORESERVICES_FRAMEWORK CoreServices REQUIRED) #CORESERVICES_FRAMEWORK get the path
 target_link_libraries(silicon_filesystem PUBLIC silicon_logger silicon_config ${CORESERVICES_FRAMEWORK})
-
+add_compile_options(-Wno-multichar)
 # Main agent executable
 add_executable(silicon_agent agent/main.cpp agent/enforcement_coordinator.cpp)
 target_link_libraries(silicon_agent PRIVATE silicon_logger silicon_process silicon_filesystem)
