@@ -9,7 +9,7 @@
 
 #include "config/config_manager.hpp"
 #include "logging/logger.hpp"
-#include "process/process_enforcer.hpp"
+#include "agent/enforcement_coordinator.hpp"
 
 namespace {
 
@@ -41,8 +41,8 @@ int main(int argc, char** argv) {
   using silicon::logging::Logger;
   using silicon::logging::LogLevel;
   using silicon::agent::Agent;
+  using silicon::agent::EnforcementCoordinator;
   using silicon::config::ConfigManager;
-  using silicon::process::ProcessEnforcer;
 
   auto& logger = Logger::instance();
   logger.set_log_path("runtime/logs/silicon_agent.log");
@@ -55,6 +55,9 @@ int main(int argc, char** argv) {
 
   const std::string config_path = (argc > 1 && argv[1] != nullptr) ? argv[1] : "";
   auto config_manager = std::make_shared<ConfigManager>(config_path);
+  if (!config_manager->load()) {
+    logger.warn("main: Config reload on startup failed; continuing with active defaults/snapshot");
+  }
 
   install_signal_handlers();
 
@@ -62,16 +65,15 @@ int main(int argc, char** argv) {
   const std::chrono::seconds heartbeat_interval{heartbeat_seconds};
 
   Agent agent(heartbeat_interval);
-  ProcessEnforcer process_enforcer(config_manager);
-
-  if (!process_enforcer.start()) {
-    logger.error("ProcessEnforcer failed to start; continuing agent without process monitoring");
+  EnforcementCoordinator coordinator(config_manager);
+  if (!coordinator.start()) {
+    logger.error("main: One or more enforcers failed to start; agent will continue with reduced monitoring");
   }
 
   agent.run(g_shutdown_requested_, &g_last_signal_);
 
-  if (!process_enforcer.stop(std::chrono::seconds(2))) {
-    logger.error("ProcessEnforcer did not stop within timeout");
+  if (!coordinator.stop(std::chrono::seconds(2))) {
+    logger.error("main: One or more enforcers did not stop within timeout");
   }
 
   logger.info("Agent shutdown complete!");

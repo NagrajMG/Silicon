@@ -312,9 +312,9 @@ void ProcessEnforcer::perform_scan() {
     }
 
     if (should_ignore_process(snapshot.executable_path, snapshot.executable_name, system_ignore_patterns)) {
-      logger.debug("ProcessEnforcer: Skipping system process: {} (PID: {})",
-                   sanitize_for_log(snapshot.executable_path),
-                   snapshot.pid);
+      // logger.debug("ProcessEnforcer: Skipping system process: {} (PID: {})",
+      //              sanitize_for_log(snapshot.executable_path),
+      //              snapshot.pid);
       continue;
     }
 

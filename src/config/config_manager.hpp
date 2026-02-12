@@ -22,11 +22,19 @@ class ConfigManager final {
   bool isDomainAllowed(const std::string& domain) const;
 
   std::vector<std::string> getProtectedPaths() const;
+  std::vector<std::string> getFilesystemMonitorPaths() const;
   std::vector<std::string> getSystemPathsToIgnore() const;
+  std::vector<std::string> getAllowedVolumes() const;
+  std::vector<std::string> getAllowedMountPrefixes() const;
 
   int getHeartbeatInterval() const;
   int getProcessScanInterval() const;
+  int getFilesystemScanIntervalMs() const;
   bool isDebugMode() const;
+  bool shouldClearClipboard() const;
+  int getClipboardClearIntervalSeconds() const;
+  bool areFilesystemNotificationsEnabled() const;
+  int getNotificationRateLimitSeconds() const;
 
   const nlohmann::json& getRawConfig() const;
 
@@ -61,10 +69,17 @@ class ConfigManager final {
   std::vector<std::string> protected_paths_;
   std::vector<std::string> filesystem_monitor_paths_;
   std::vector<std::string> system_paths_to_ignore_;
+  std::vector<std::string> allowed_volumes_;
+  std::vector<std::string> allowed_mount_prefixes_;
 
   int heartbeat_interval_seconds_{60};
   int process_scan_interval_seconds_{2};
+  int filesystem_scan_interval_ms_{2000};
+  int clipboard_clear_interval_seconds_{15};
+  int notification_rate_limit_seconds_{5};
   bool debug_mode_{true};
+  bool clear_clipboard_{false};
+  bool filesystem_notifications_enabled_{true};
 
   std::shared_ptr<const nlohmann::json> config_snapshot_;
 };

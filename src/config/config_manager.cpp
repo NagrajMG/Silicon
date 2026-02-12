@@ -22,7 +22,7 @@ std::string default_config_path() {
   const char* home = std::getenv("HOME"); 
 
   if (home) {
-    std::filesystem::path user_support_path = std::filesystem::path(home) / "Library/Application Support/com.silicon.agent/policy.json";
+    std::filesystem::path user_support_path = std::filesystem::path(home) / "~/Library/Application Support/com.silicon.agent/policy.json";
     
     // Check config file exists
     std::error_code exists_ec;
@@ -42,7 +42,7 @@ std::string default_config_path() {
     // If we get here: file doesn't exist OR error occurred
     
     // Create directory structure
-    auto support_dir = std::filesystem::path(home) / "Library/Application Support/com.silicon.agent";
+    auto support_dir = std::filesystem::path(home) / "~/Library/Application Support/com.silicon.agent/policy.json";
 
     std::error_code create_ec;
     bool dir_created = std::filesystem::create_directories(support_dir, create_ec);
@@ -127,12 +127,19 @@ bool create_default_config(const std::string& config_path) {
     {"blocked_processes", nlohmann::json::array()},
     {"allowed_domains", nlohmann::json::array()},
     {"blocked_domains", nlohmann::json::array()},
-    {"protected_paths", nlohmann::json::array()},
+    {"protected_paths", {"/Users/copperhead07/Downloads"}},
     {"network_whitelist", nlohmann::json::array()},
     {"filesystem_monitor_paths", nlohmann::json::array()},
+    {"allowed_volumes", nlohmann::json::array()},
+    {"allowed_mount_prefixes", nlohmann::json::array()},
     {"debug_mode", true},
     {"heartbeat_interval_seconds", 120},
     {"process_scan_interval_seconds", 10},
+    {"filesystem_scan_interval_ms", 2000},
+    {"clear_clipboard", false},
+    {"clipboard_clear_interval_seconds", 15},
+    {"filesystem_notifications_enabled", true},
+    {"notification_rate_limit_seconds", 5},
     {"system_paths_to_ignore", {
       "/System/Library/",
       "/usr/libexec/",
@@ -302,7 +309,7 @@ bool ConfigManager::parse_json_locked(const nlohmann::json& json) {
     }
   };
 
-  // Lambda to read integer values from JSON with validation
+  // Lambda to read integer values from JSON with strict minimum validation.
   auto read_int = [&](const char* key, int& target, int min_value) {
     if (!json.contains(key)) {
       return;
@@ -316,6 +323,26 @@ bool ConfigManager::parse_json_locked(const nlohmann::json& json) {
     if (value < min_value) {
       logger.warn("ConfigManager: {} must be >= {}", key, min_value);
       ok = false;
+      return;
+    }
+    target = value;
+  };
+
+  // Lambda to read integer values and clamp low values to the minimum.
+  auto read_int_clamped = [&](const char* key, int& target, int min_value) {
+    if (!json.contains(key)) {
+      return;
+    }
+    if (!json.at(key).is_number_integer()) {
+      logger.warn("ConfigManager: {} must be an integer", key);
+      ok = false;
+      return;
+    }
+    const auto value = json.at(key).get<int>();
+    if (value < min_value) {
+      logger.warn("ConfigManager: {} below minimum {}; clamping", key, min_value);
+      ok = false;
+      target = min_value;
       return;
     }
     target = value;
@@ -342,6 +369,8 @@ bool ConfigManager::parse_json_locked(const nlohmann::json& json) {
   std::vector<std::string> network_whitelist;
   std::vector<std::string> filesystem_monitor_paths;
   std::vector<std::string> system_paths_to_ignore;
+  std::vector<std::string> allowed_volumes;
+  std::vector<std::string> allowed_mount_prefixes;
 
   // Read all config sections
   read_string_array("allowed_processes", allowed_processes);
@@ -352,11 +381,18 @@ bool ConfigManager::parse_json_locked(const nlohmann::json& json) {
   read_string_array("network_whitelist", network_whitelist);
   read_string_array("filesystem_monitor_paths", filesystem_monitor_paths);
   read_string_array("system_paths_to_ignore", system_paths_to_ignore);
+  read_string_array("allowed_volumes", allowed_volumes);
+  read_string_array("allowed_mount_prefixes", allowed_mount_prefixes);
 
   // Read integer config values
   read_bool("debug_mode", debug_mode_);
+  read_bool("clear_clipboard", clear_clipboard_);
+  read_bool("filesystem_notifications_enabled", filesystem_notifications_enabled_);
   read_int("heartbeat_interval_seconds", heartbeat_interval_seconds_, 1);
   read_int("process_scan_interval_seconds", process_scan_interval_seconds_, 1);
+  read_int_clamped("filesystem_scan_interval_ms", filesystem_scan_interval_ms_, 250);
+  read_int_clamped("clipboard_clear_interval_seconds", clipboard_clear_interval_seconds_, 5);
+  read_int_clamped("notification_rate_limit_seconds", notification_rate_limit_seconds_, 1);
 
   // Store processes in sets for fast lookup
   allowed_processes_.clear();
@@ -389,6 +425,8 @@ bool ConfigManager::parse_json_locked(const nlohmann::json& json) {
   // Normalize and store file paths
   protected_paths_ = normalize_paths(protected_paths);
   filesystem_monitor_paths_ = normalize_paths(filesystem_monitor_paths);
+  allowed_mount_prefixes_ = normalize_paths(allowed_mount_prefixes);
+  allowed_volumes_ = dedupe_preserve_order(allowed_volumes);
 
   // Handle system paths to ignore
   if (!system_paths_to_ignore.empty()) {
@@ -435,10 +473,17 @@ void ConfigManager::apply_defaults() {
 
   protected_paths_.clear();
   filesystem_monitor_paths_.clear();
+  allowed_volumes_.clear();
+  allowed_mount_prefixes_.clear();
 
   heartbeat_interval_seconds_ = 120;      // Default: 120 seconds between heartbeats
   process_scan_interval_seconds_ = 10;    // Default: Scan processes every 10 seconds
+  filesystem_scan_interval_ms_ = 2000;    // Default: filesystem polling every 2 seconds
+  clipboard_clear_interval_seconds_ = 15; // Default: clear clipboard every 15 seconds
+  notification_rate_limit_seconds_ = 5;   // Default: one filesystem notification per 5 seconds
   debug_mode_ = true;                     // Default: monitor-only development mode
+  clear_clipboard_ = false;               // Default: do not clear clipboard automatically
+  filesystem_notifications_enabled_ = true;
 
   // Default system paths to ignore
   system_paths_to_ignore_ = normalize_paths({
@@ -463,10 +508,18 @@ void ConfigManager::log_summary_locked() const {
   logger.info("ConfigManager: Allowed domains: {}", allowed_domains_.size());
   logger.info("ConfigManager: Blocked domains: {}", blocked_domains_.size());
   logger.info("ConfigManager: Protected paths: {}", protected_paths_.size());
+  logger.info("ConfigManager: Filesystem monitor paths: {}", filesystem_monitor_paths_.size());
+  logger.info("ConfigManager: Allowed volumes: {}", allowed_volumes_.size());
+  logger.info("ConfigManager: Allowed mount prefixes: {}", allowed_mount_prefixes_.size());
   logger.info("ConfigManager: System paths to ignore: {}", system_paths_to_ignore_.size());
   logger.info("ConfigManager: Heartbeat interval: {}s", heartbeat_interval_seconds_);
   logger.info("ConfigManager: Process scan interval: {}s", process_scan_interval_seconds_);
+  logger.info("ConfigManager: Filesystem scan interval: {}ms", filesystem_scan_interval_ms_);
   logger.info("ConfigManager: Debug mode: {}", debug_mode_ ? "true" : "false");
+  logger.info("ConfigManager: Filesystem notifications enabled: {}", filesystem_notifications_enabled_ ? "true" : "false");
+  logger.info("ConfigManager: Filesystem notification rate limit: {}s", notification_rate_limit_seconds_);
+  logger.info("ConfigManager: Clear clipboard: {}", clear_clipboard_ ? "true" : "false");
+  logger.info("ConfigManager: Clipboard clear interval: {}s", clipboard_clear_interval_seconds_);
 
   // Debug-level logs with sample data
   if (!allowed_processes_.empty()) {
@@ -495,6 +548,14 @@ void ConfigManager::log_summary_locked() const {
 
   if (!filesystem_monitor_paths_.empty()) {
     logger.debug("ConfigManager: Filesystem monitor paths: {}", join_strings(filesystem_monitor_paths_));
+  }
+
+  if (!allowed_volumes_.empty()) {
+    logger.debug("ConfigManager: Allowed volumes: {}", join_strings(allowed_volumes_));
+  }
+
+  if (!allowed_mount_prefixes_.empty()) {
+    logger.debug("ConfigManager: Allowed mount prefixes: {}", join_strings(allowed_mount_prefixes_));
   }
 }
 
@@ -570,10 +631,25 @@ std::vector<std::string> ConfigManager::getProtectedPaths() const {
   return protected_paths_;
 }
 
+std::vector<std::string> ConfigManager::getFilesystemMonitorPaths() const {
+  std::shared_lock lock(mutex_);
+  return filesystem_monitor_paths_;
+}
+
 // Get list of system paths to ignore (for ProcessEnforcer safety
 std::vector<std::string> ConfigManager::getSystemPathsToIgnore() const {
   std::shared_lock lock(mutex_);
   return system_paths_to_ignore_;
+}
+
+std::vector<std::string> ConfigManager::getAllowedVolumes() const {
+  std::shared_lock lock(mutex_);
+  return allowed_volumes_;
+}
+
+std::vector<std::string> ConfigManager::getAllowedMountPrefixes() const {
+  std::shared_lock lock(mutex_);
+  return allowed_mount_prefixes_;
 }
 
 // Get heartbeat interval in seconds
@@ -588,9 +664,34 @@ int ConfigManager::getProcessScanInterval() const {
   return process_scan_interval_seconds_;
 }
 
+int ConfigManager::getFilesystemScanIntervalMs() const {
+  std::shared_lock lock(mutex_);
+  return std::max(filesystem_scan_interval_ms_, 250);
+}
+
 bool ConfigManager::isDebugMode() const {
   std::shared_lock lock(mutex_);
   return debug_mode_;
+}
+
+bool ConfigManager::shouldClearClipboard() const {
+  std::shared_lock lock(mutex_);
+  return clear_clipboard_;
+}
+
+int ConfigManager::getClipboardClearIntervalSeconds() const {
+  std::shared_lock lock(mutex_);
+  return std::max(clipboard_clear_interval_seconds_, 5);
+}
+
+bool ConfigManager::areFilesystemNotificationsEnabled() const {
+  std::shared_lock lock(mutex_);
+  return filesystem_notifications_enabled_;
+}
+
+int ConfigManager::getNotificationRateLimitSeconds() const {
+  std::shared_lock lock(mutex_);
+  return std::max(notification_rate_limit_seconds_, 1);
 }
 
 // Get raw JSON config for debugging/inspection

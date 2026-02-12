@@ -1,0 +1,26 @@
+Language: Cpp
+BasedOnStyle: Google
+
+# Core Layout
+IndentWidth: 2
+ColumnLimit: 100
+AccessModifierOffset: -1
+
+# Brace and Space Rules
+BreakBeforeBraces: Attach
+SpaceAfterTemplateKeyword: true
+SpaceBeforeRangeBasedForLoopColon: true
+
+# Parameter and Constructor Wrapping
+AllowAllParametersOfDeclarationOnNextLine: true
+BinPackParameters: false
+BinPackArguments: false
+AlignAfterOpenBracket: Align
+PackConstructorInitializers: NextLine
+
+# Pointer/Reference Alignment
+PointerAlignment: Left
+
+# Cleanup
+NamespaceIndentation: None
+FixNamespaceComments: true

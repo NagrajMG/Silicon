@@ -30,3 +30,6 @@ cmake-build-*/
 # ===== Misc =====
 *.swp
 *.tmp
+
+# ==== config ====
+policy.json
